@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nature Slider Editor</title>
+<link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
+<style>
+  body { font-family: Arial; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #eee; }
+  .swiper { width: 360px; height: 640px; background: #000; border-radius: 10px; overflow: hidden; position: relative; }
+  .swiper-slide { display: flex; align-items: center; justify-content: center; background-size: cover; background-position: center; position: relative; }
+  .control-panel { position: absolute; top: 10px; right: 15px; background: #ffffffcc; padding: 10px; border-radius: 10px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 0 5px #ccc; z-index: 1000; font-size: 14px; }
+  .text-box { position: absolute; cursor: move; border: 1px dashed transparent; padding: 5px 10px; user-select: none; min-width: 30px; text-align: center; }
+  .text-box.selected { border: 1px dashed gray; }
+  .resize-handle { width: 10px; height: 10px; background: white; border: 1px solid gray; position: absolute; right: 0; bottom: 0; cursor: se-resize; }
+  select, input[type="range"], button { padding: 4px; border-radius: 5px; border: 1px solid #ccc; }
+  .color-palette { display: flex; gap: 4px; flex-wrap: wrap; }
+  .color-option { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; position: relative; border: 1px solid #aaa; }
+  .color-option.selected::after { content: "✓"; color: white; font-size: 14px; position: absolute; top: 0; left: 4px; }
+</style>
+</head>
+<body>
+
+<div class="control-panel">
+  <button id="addText">Add Text</button>
+  <label>Font:</label>
+  <select id="fontStyle">
+    <option value="Times New Roman">Times New Roman</option>
+    <option value="Arial">Arial</option>
+    <option value="Courier New">Courier New</option>
+    <option value="Verdana">Verdana</option>
+    <option value="Georgia">Georgia</option>
+  </select>
+  <label>Font Size:</label>
+  <select id="fontSize">
+    <option value="16">16</option>
+    <option value="20">20</option>
+    <option value="24" selected>24</option>
+    <option value="30">30</option>
+    <option value="36">36</option>
+  </select>
+  <label>Line Height:</label>
+  <input type="range" id="lineHeight" min="1" max="2" step="0.1" value="1.2">
+  <label>Align:</label>
+  <select id="align">
+    <option value="left">Left</option>
+    <option value="center" selected>Center</option>
+    <option value="right">Right</option>
+  </select>
+  <label>Color:</label>
+  <div class="color-palette" id="colorPalette">
+    <div class="color-option" style="background:red" data-color="red"></div>
+    <div class="color-option" style="background:orange" data-color="orange"></div>
+    <div class="color-option" style="background:yellow" data-color="yellow"></div>
+    <div class="color-option" style="background:green" data-color="green"></div>
+    <div class="color-option" style="background:blue" data-color="blue"></div>
+    <div class="color-option" style="background:purple" data-color="purple"></div>
+    <div class="color-option" style="background:brown" data-color="brown"></div>
+    <div class="color-option" style="background:pink" data-color="pink"></div>
+    <div class="color-option" style="background:black" data-color="black"></div>
+    <div class="color-option" style="background:gray" data-color="gray"></div>
+  </div>
+</div>
+
+<div class="swiper">
+  <div class="swiper-wrapper">
+    <div class="swiper-slide" style="background-image:url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?crop=entropy&cs=tinysrgb&fit=crop&h=640&w=360');">
+      <div class="text-box" style="top:50%;left:50%;font-size:24px;color:white;">Nature</div>
+    </div>
+    <div class="swiper-slide" style="background-image:url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?crop=entropy&cs=tinysrgb&fit=crop&h=640&w=360');">
+      <div class="text-box" style="top:50%;left:50%;font-size:24px;color:white;">Sea</div>
+    </div>
+    <div class="swiper-slide" style="background-image:url('https://images.unsplash.com/photo-1493558103817-58b2924bce98?crop=entropy&cs=tinysrgb&fit=crop&h=640&w=360');">
+      <div class="text-box" style="top:50%;left:50%;font-size:24px;color:white;">Road</div>
+    </div>
+  </div>
+  <div class="swiper-button-next"></div>
+  <div class="swiper-button-prev"></div>
+</div>
+
+<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+<script>
+const swiper = new Swiper('.swiper', {
+  navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
+});
+
+const fontStyle = document.getElementById('fontStyle');
+const fontSize = document.getElementById('fontSize');
+const align = document.getElementById('align');
+const lineHeight = document.getElementById('lineHeight');
+const colorPalette = document.getElementById('colorPalette');
+const addText = document.getElementById('addText');
+let selectedBox = null;
+
+// Select text box
+function selectBox(box){
+  if(selectedBox) selectedBox.classList.remove('selected');
+  selectedBox = box;
+  box.classList.add('selected');
+  box.contentEditable = "true";
+  box.focus();
+
+  fontStyle.value = box.style.fontFamily || 'Arial';
+  fontSize.value = parseInt(box.style.fontSize) || 24;
+  align.value = box.style.textAlign || 'center';
+  lineHeight.value = parseFloat(box.style.lineHeight) || 1.2;
+}
+
+// Prevent deselection when using control panel
+document.querySelectorAll('.control-panel, .control-panel *').forEach(el=>{
+  el.addEventListener('mousedown', e=>e.stopPropagation());
+});
+
+// Body click deselect only if click outside controls
+document.body.addEventListener('click', ()=>{
+  if(!event.target.closest('.control-panel') && selectedBox){
+    selectedBox.classList.remove('selected');
+    selectedBox = null;
+  }
+});
+
+// Controls
+fontStyle.addEventListener('change', ()=>{ if(selectedBox) selectedBox.style.fontFamily = fontStyle.value; });
+fontSize.addEventListener('change', ()=>{ if(selectedBox) selectedBox.style.fontSize = fontSize.value+'px'; });
+align.addEventListener('change', ()=>{ if(selectedBox) selectedBox.style.textAlign = align.value; });
+lineHeight.addEventListener('input', ()=>{ if(selectedBox) selectedBox.style.lineHeight = lineHeight.value; });
+
+colorPalette.querySelectorAll('.color-option').forEach(opt=>{
+  opt.addEventListener('click', ()=>{
+    colorPalette.querySelectorAll('.color-option').forEach(o=>o.classList.remove('selected'));
+    opt.classList.add('selected');
+    if(selectedBox) selectedBox.style.color = opt.dataset.color;
+  });
+});
+
+// Drag + Resize
+function makeDraggableResizable(el){
+  let isDown=false, offsetX, offsetY;
+  el.addEventListener('mousedown', e=>{
+    if(e.target.classList.contains('resize-handle')) return;
+    isDown=true;
+    selectBox(el);
+    offsetX=e.offsetX;
+    offsetY=e.offsetY;
+  });
+  document.addEventListener('mouseup', ()=>{ isDown=false; isResizing=false; });
+  document.addEventListener('mousemove', e=>{
+    if(isDown){
+      const rect = el.parentElement.getBoundingClientRect();
+      let x = e.clientX - rect.left - offsetX;
+      let y = e.clientY - rect.top - offsetY;
+      x=Math.max(0, Math.min(x, rect.width-el.offsetWidth));
+      y=Math.max(0, Math.min(y, rect.height-el.offsetHeight));
+      el.style.left = x+'px';
+      el.style.top = y+'px';
+    }
+  });
+
+  // Resize handle
+  let handle = document.createElement('div');
+  handle.className='resize-handle';
+  el.appendChild(handle);
+  let isResizing=false;
+  handle.addEventListener('mousedown', e=>{ e.stopPropagation(); isResizing=true; });
+  document.addEventListener('mousemove', e=>{
+    if(!isResizing) return;
+    const rect = el.getBoundingClientRect();
+    let newWidth = e.clientX - rect.left;
+    newWidth = Math.max(30,newWidth);
+    el.style.fontSize = newWidth/10+'px';
+  });
+}
+
+// Initialize existing boxes
+document.querySelectorAll('.text-box').forEach(box=>{
+  makeDraggableResizable(box);
+  box.addEventListener('click', e=>{ e.stopPropagation(); selectBox(box); });
+});
+
+// Add new text
+addText.addEventListener('click', ()=>{
+  const slide = swiper.slides[swiper.activeIndex];
+  const newBox = document.createElement('div');
+  newBox.className = 'text-box';
+  newBox.textContent = 'New Text';
+  newBox.style.top='50%';
+  newBox.style.left='50%';
+  newBox.style.fontFamily=fontStyle.value;
+  newBox.style.fontSize=fontSize.value+'px';
+  newBox.style.textAlign=align.value;
+  newBox.style.lineHeight=lineHeight.value;
+  const colorSelected = colorPalette.querySelector('.color-option.selected');
+  if(colorSelected) newBox.style.color=colorSelected.dataset.color||'white';
+  slide.appendChild(newBox);
+  makeDraggableResizable(newBox);
+  newBox.addEventListener('click', e=>{ e.stopPropagation(); selectBox(newBox); });
+});
+</script>
+</body>
+</html>
